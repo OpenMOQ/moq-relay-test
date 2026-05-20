@@ -4,7 +4,7 @@
   "description": "Adjusts publish bitrate to maintain target latency against a relay. Measures bandwidth, latency, loss, and adaptive algorithm behavior.",
   "category": "performance",
   "docker": {
-    "image": "ghcr.io/gmarzot/aiomoqt:0.8.2",
+    "image": "ghcr.io/gmarzot/aiomoqt:0.9.4",
     "entrypoint": ["python"],
     "command": ["/app/aiomoqt/examples/adaptive_bench.py"],
     "network": "host"

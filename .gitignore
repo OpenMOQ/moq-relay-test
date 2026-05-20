@@ -5,3 +5,4 @@ interop_tests/build/
 **/.scratch/
 **/.getdeps-scratch/
 .DS_Store
+.local/
