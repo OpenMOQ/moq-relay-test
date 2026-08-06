@@ -4,7 +4,7 @@
   "description": "Spawns N simultaneous subscribers against a relay and measures aggregate throughput, per-subscriber latency, and success rate.",
   "category": "performance",
   "docker": {
-    "image": "ghcr.io/gmarzot/aiomoqt:0.8.2",
+    "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
     "entrypoint": ["python"],
     "command": ["/app/aiomoqt/examples/multi_sub_bench.py"],
     "network": "host"
@@ -30,6 +30,15 @@
       "default": "16"
     },
     {
+      "id": "duration",
+      "label": "Duration (seconds)",
+      "type": "number",
+      "default": 60,
+      "min": 10,
+      "max": 600,
+      "description": "Test duration in seconds"
+    },
+    {
       "id": "subscribers",
       "label": "Number of Subscribers",
       "type": "number",
@@ -53,15 +62,6 @@
         { "value": "4k",    "label": "4K" }
       ],
       "default": "720p"
-    },
-    {
-      "id": "duration",
-      "label": "Duration (seconds)",
-      "type": "number",
-      "default": 60,
-      "min": 10,
-      "max": 600,
-      "description": "Test duration in seconds"
     }
   ],
   "buildCommand": "{relay_url} --draft {draft} -n {subscribers} --video {video} -t {duration}",

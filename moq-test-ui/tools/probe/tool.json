@@ -4,9 +4,9 @@
   "description": "Probes relay endpoints for liveness, supported drafts, transport types, and latency.",
   "category": "diagnostics",
   "docker": {
-    "image": "ghcr.io/gmarzot/aiomoqt:0.8.2",
+    "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
     "entrypoint": ["/bin/sh", "-c"],
-    "command": ["python /app/aiomoqt/examples/relay_probe.py -f /tmp/relays.json -o /tmp/probe_out.json --once && cat /tmp/probe_out.json && echo"],
+    "command": ["python /app/aiomoqt/examples/relay_probe.py -f /tmp/relays.json -o /tmp/probe_out.json && cat /tmp/probe_out.json && echo"],
     "network": "host"
   },
   "prepareFiles": [
@@ -24,17 +24,6 @@
       "default": "",
       "placeholder": "https://relay.example.com/moq-relay",
       "description": "MoQT relay endpoint to probe"
-    },
-    {
-      "id": "transport",
-      "label": "Transport",
-      "type": "select",
-      "default": "both",
-      "options": [
-        { "value": "both", "label": "QUIC + WebTransport" },
-        { "value": "quic", "label": "QUIC only" },
-        { "value": "wt",   "label": "WebTransport only" }
-      ]
     },
     {
       "id": "timeout",

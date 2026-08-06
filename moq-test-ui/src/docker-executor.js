@@ -104,6 +104,40 @@ export class DockerExecutor {
   }
 
   /**
+   * Ensure an image is present locally, pulling it if necessary.
+   * Pull progress is streamed to onOutput so the user sees feedback.
+   */
+  async _ensureImage(imageName, runId, onOutput) {
+    try {
+      await docker.getImage(imageName).inspect();
+      debug(`image already present: ${imageName}`);
+      return; // already local
+    } catch (err) {
+      if (err.statusCode !== 404) throw err; // unexpected error
+    }
+
+    onOutput(runId, `[runner] image not found locally — pulling ${imageName} …`, Date.now());
+
+    await new Promise((resolve, reject) => {
+      docker.pull(imageName, (pullErr, stream) => {
+        if (pullErr) return reject(pullErr);
+        docker.modem.followProgress(
+          stream,
+          (err) => (err ? reject(err) : resolve()),
+          (event) => {
+            const msg = event.status
+              ? event.id ? `${event.status} ${event.id}` : event.status
+              : JSON.stringify(event);
+            onOutput(runId, `[pull] ${msg}`, Date.now());
+          },
+        );
+      });
+    });
+
+    onOutput(runId, `[runner] pull complete`, Date.now());
+  }
+
+  /**
    * Start a Docker container for the given tool with parameters.
    * Returns { runId, stream } where stream emits 'data' events with output lines.
    */
@@ -165,6 +199,11 @@ export class DockerExecutor {
     console.log(`[docker-executor] ${dockerRunCmd}`);
 
     try {
+      // Pull the image if it is not already present locally.
+      // docker.createContainer() maps to POST /containers/create which returns
+      // 404 immediately when the image is missing — it never auto-pulls.
+      await this._ensureImage(tool.docker.image, runId, onOutput);
+
       const container = await docker.createContainer(createOpts);
 
       this.runs.set(runId, {

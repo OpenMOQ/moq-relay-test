@@ -72,7 +72,7 @@ export function createWSServer(server, toolRegistry, dockerExecutor, resultsStor
 
         const outputBuffer = [];
 
-        const { runId } = await dockerExecutor.startRun(
+        const result = await dockerExecutor.startRun(
           tool,
           msg.params,
           (runId, line, ts) => {
@@ -98,6 +98,12 @@ export function createWSServer(server, toolRegistry, dockerExecutor, resultsStor
           },
         );
 
+        // If startRun failed (e.g. image pull error, bad config), onError has
+        // already sent run-error to the client — do not send run-started or the
+        // client will enter a waiting-for-complete state that never resolves.
+        if (result.error) return;
+
+        const { runId } = result;
         session.runs.set(runId, { toolId: msg.toolId, startedAt: new Date().toISOString() });
         send(ws, 'run-started', { runId, toolId: msg.toolId });
         break;
