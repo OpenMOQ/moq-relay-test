@@ -143,7 +143,7 @@ export function createWSServer(server, toolRegistry, dockerExecutor, resultsStor
 
       case 'get-result': {
         const result = resultsStore.load(msg.tool, msg.filename);
-        send(ws, 'result-data', { result });
+        send(ws, 'result-data', { result, filename: msg.filename });
         break;
       }
 

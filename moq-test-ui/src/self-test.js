@@ -12,6 +12,53 @@ export class SelfTestOrchestrator {
     this.activeSelfTests = new Map(); // selfTestId -> { aborted, ... }
   }
 
+  normalizeTransport(value) {
+    const v = String(value || '').trim().toUpperCase();
+    if (!v || v === 'ALL' || v === 'BOTH') return 'all';
+    if (v === 'Q' || v === 'QUIC') return 'Q';
+    if (v === 'WT' || v === 'WEBTRANSPORT' || v === 'H3') return 'WT';
+    return 'all';
+  }
+
+  entryTransport(entry) {
+    const explicit = this.normalizeTransport(entry?.selfTestTransport);
+    if (explicit !== 'all') return explicit;
+
+    const defaultsTransport = entry?.defaults?.transport;
+    const byDefaults = this.normalizeTransport(defaultsTransport);
+    if (byDefaults !== 'all') return byDefaults;
+    if (String(defaultsTransport || '').trim().toLowerCase() === 'both') return 'all';
+
+    const label = String(entry?.label || '').toLowerCase();
+    if (label.includes('webtransport') || label.includes('(wt)') || label.includes('wt/h3')) return 'WT';
+    if (label.includes('quic')) return 'Q';
+
+    return 'all';
+  }
+
+  shouldRunEntry(selectedTransport, entryTransport) {
+    if (selectedTransport === 'all') return true;
+    if (entryTransport === 'all') return true;
+    return selectedTransport === entryTransport;
+  }
+
+  applySelectedTransport(params, selectedTransport) {
+    if (!Object.prototype.hasOwnProperty.call(params, 'transport')) return;
+    if (selectedTransport === 'Q') {
+      if (params.transport === '' || String(params.transport).toLowerCase() === 'both') {
+        params.transport = 'Q';
+      }
+      return;
+    }
+    if (selectedTransport === 'WT') {
+      if (String(params.transport).toUpperCase() === 'Q') {
+        params.transport = '';
+      } else if (String(params.transport).toLowerCase() === 'both') {
+        params.transport = 'wt';
+      }
+    }
+  }
+
   /**
    * Run all self-test-enabled tools sequentially.
    * @param {object} config - { relayUrl, transport, draft }
@@ -21,7 +68,11 @@ export class SelfTestOrchestrator {
    */
   async run(config, sessionId, onProgress, onComplete) {
     const selfTestId = uuidv4();
-    const tools = this.registry.getSelfTestTools();
+    const selectedTransport = this.normalizeTransport(config.transport);
+    const tools = this.registry.getSelfTestTools().filter((tool) => {
+      const entry = tool._selfTestEntry || {};
+      return this.shouldRunEntry(selectedTransport, this.entryTransport(entry));
+    });
     const startedAt = new Date().toISOString();
 
     const state = { aborted: false, currentRunId: null };
@@ -45,8 +96,8 @@ export class SelfTestOrchestrator {
         ...entry.defaults,
         relay_url: config.relayUrl,
       };
-      if (config.transport && !entry.defaults?.transport) params.transport = config.transport;
-      if (config.draft && !entry.defaults?.draft) params.draft = config.draft;
+      this.applySelectedTransport(params, selectedTransport);
+      if (config.draft && String(config.draft).toLowerCase() !== 'all') params.draft = config.draft;
 
       onProgress(selfTestId, runLabel, 'running', { params });
 

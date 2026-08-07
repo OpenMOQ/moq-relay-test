@@ -144,7 +144,14 @@ export class DockerExecutor {
   async startRun(tool, params, onOutput, onComplete, onError) {
     const runId = uuidv4();
     const args = this.buildArgs(tool, params);
-    const cmd = [...tool.docker.command, ...args];
+    const rawCommand = Array.isArray(tool.docker.command) ? tool.docker.command : [];
+    const argsString = args.join(' ').trim();
+    const hasBuildArgsPlaceholder = rawCommand.some(part => typeof part === 'string' && part.includes('{build_args}'));
+    const commandWithBuildArgs = rawCommand.map(part => {
+      if (typeof part !== 'string') return part;
+      return part.replace(/\{build_args\}/g, argsString);
+    });
+    const cmd = hasBuildArgsPlaceholder ? commandWithBuildArgs : [...commandWithBuildArgs, ...args];
 
     const containerName = `runner-${tool.name}-${runId.slice(0, 8)}`;
 

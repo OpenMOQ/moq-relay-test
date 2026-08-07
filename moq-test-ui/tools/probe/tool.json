@@ -6,7 +6,7 @@
   "docker": {
     "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
     "entrypoint": ["/bin/sh", "-c"],
-    "command": ["python /app/aiomoqt/examples/relay_probe.py -f /tmp/relays.json -o /tmp/probe_out.json && cat /tmp/probe_out.json && echo"],
+    "command": ["python /app/aiomoqt/examples/relay_probe.py -f /tmp/relays.json -o /tmp/probe_out.json {build_args} && cat /tmp/probe_out.json && echo"],
     "network": "host"
   },
   "prepareFiles": [
@@ -26,12 +26,15 @@
       "description": "MoQT relay endpoint to probe"
     },
     {
-      "id": "timeout",
-      "label": "Timeout (seconds)",
-      "type": "number",
-      "default": 10,
-      "min": 1,
-      "max": 60
+      "id": "transport",
+      "label": "Transport",
+      "type": "select",
+      "default": "both",
+      "options": [
+        { "value": "both", "label": "QUIC + WebTransport (H3)" },
+        { "value": "quic", "label": "QUIC" },
+        { "value": "wt",   "label": "WebTransport (H3)" }
+      ]
     }
   ],
   "buildCommand": "",
@@ -42,9 +45,9 @@
   "selfTest": {
     "enabled": true,
     "order": 1,
+    "selfTestTransport": "all",
     "defaults": {
-      "transport": "both",
-      "timeout": 15
+      "transport": "both"
     }
   }
 }

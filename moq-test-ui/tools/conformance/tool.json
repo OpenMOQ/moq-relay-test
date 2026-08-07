@@ -47,12 +47,26 @@
     { "id": "docker", "label": "Hide Docker build output", "pattern": "^\\[\\+\\]|^\\s*=>|^CACHED|^#\\d+|^Sending build|^Step\\s", "default": true }
   ],
   "renderer": "renderer.js",
-  "selfTest": {
-    "enabled": true,
-    "order": 3,
-    "defaults": {
-      "draft": "16",
-      "transport": "Q"
+  "selfTest": [
+    {
+      "enabled": true,
+      "order": 3,
+      "label": "MoQ Conformance (QUIC)",
+      "selfTestTransport": "Q",
+      "defaults": {
+        "draft": "16",
+        "transport": "Q"
+      }
+    },
+    {
+      "enabled": true,
+      "order": 4,
+      "label": "MoQ Conformance (WebTransport)",
+      "selfTestTransport": "WT",
+      "defaults": {
+        "draft": "16",
+        "transport": ""
+      }
     }
-  }
+  ]
 }

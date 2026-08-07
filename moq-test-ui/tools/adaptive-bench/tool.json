@@ -82,7 +82,7 @@
   "renderer": "renderer.js",
   "selfTest": {
     "enabled": true,
-    "order": 4,
+    "order": 5,
     "defaults": {
       "sub_mbps": 10,
       "step_mbps": 10,

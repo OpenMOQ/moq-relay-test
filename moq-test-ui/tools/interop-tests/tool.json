@@ -40,6 +40,7 @@
       "enabled": true,
       "order": 2,
       "label": "Interop Tests (WebTransport)",
+      "selfTestTransport": "WT",
       "defaults": {
         "tests": "GoawayTest,MaxRequestIdTest,PublishNamespaceDoneTest,PublishNamespaceTest,PublishTest,SubscribeErrorTest,SubscribeNamespaceTest,SubscribeTest,SubscribeUpdateTest"
       }

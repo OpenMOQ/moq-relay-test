@@ -613,6 +613,7 @@ main { height: calc(100vh - 52px); overflow: hidden; }
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .result-modal-header {
   display: flex;
@@ -648,5 +649,36 @@ main { height: calc(100vh - 52px); overflow: hidden; }
   white-space: pre-wrap;
 }
 
+/* ── Result modal tabs ────────────────────────────────────────── */
+.result-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.25rem;
+}
+.result-tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: -1px;
+}
+.result-tab-btn:hover { color: var(--text); }
+.result-tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+.result-tab-panel {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.result-tab-panel.hidden { display: none; }
+
+/* ── History table ───────────────────────────────────────────── */
+.history-relay { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; color: var(--text-muted); }
+.history-summary-cell { font-size: 0.82rem; }.st-history-tool-list { padding: 0.75rem 1rem; overflow-y: auto; }
 /* ── Utility ──────────────────────────────────────────────────── */
 .muted { color: var(--text-muted); }
