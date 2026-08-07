@@ -243,5 +243,5 @@ help:
 	@printf '  make tests TESTS_ARGS="--list"\n'
 	@printf '  make conformance CONFORMANCE_URL=http://relay.example.com:9999\n'
 	@printf '  make conformance CONFORMANCE_ARGS="16"\n'
-	@printf '  make push REGISTRY=ghcr.io/myorg TAG=v1.2.3\n'
+	@printf '  make push REGISTRY=ghcr.io/openmoq TAG=v1.2.3\n'
 	@printf '\n'

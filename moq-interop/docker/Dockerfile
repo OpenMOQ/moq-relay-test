@@ -212,6 +212,9 @@ RUN set -e; \
 # =============================================================================
 FROM ubuntu:${UBUNTU_VERSION} AS runtime
 
+LABEL org.opencontainers.image.source="https://github.com/openmoq/moq-relay-test" \
+      org.opencontainers.image.title="moq-interop"
+
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install only what the dynamic linker will need at runtime.
