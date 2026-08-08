@@ -4,7 +4,7 @@
   "description": "Runs the MoQTest conformance test suite against a relay, verifying protocol compliance across forwarding preferences, object handling, extensions, and complex scenarios.",
   "category": "conformance",
   "docker": {
-    "image": "moq-interop:latest",
+    "image": "ghcr.io/openmoq/moq-interop:v0.1.1",
     "entrypoint": ["/opt/moq/conformance/run_conformance.sh"],
     "command": [],
     "network": "host",
@@ -47,12 +47,26 @@
     { "id": "docker", "label": "Hide Docker build output", "pattern": "^\\[\\+\\]|^\\s*=>|^CACHED|^#\\d+|^Sending build|^Step\\s", "default": true }
   ],
   "renderer": "renderer.js",
-  "selfTest": {
-    "enabled": true,
-    "order": 3,
-    "defaults": {
-      "draft": "16",
-      "transport": "Q"
+  "selfTest": [
+    {
+      "enabled": true,
+      "order": 3,
+      "label": "MoQ Conformance (QUIC)",
+      "selfTestTransport": "Q",
+      "defaults": {
+        "draft": "16",
+        "transport": "Q"
+      }
+    },
+    {
+      "enabled": true,
+      "order": 4,
+      "label": "MoQ Conformance (WebTransport)",
+      "selfTestTransport": "WT",
+      "defaults": {
+        "draft": "16",
+        "transport": ""
+      }
     }
-  }
+  ]
 }

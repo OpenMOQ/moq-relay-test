@@ -81,25 +81,10 @@ export default {
     const allLive = liveProbes === totalProbes;
     const summaryClass = liveProbes === 0 ? 'failure' : allLive ? 'success' : 'partial';
 
-    // Draft breakdown chips
-    const draftChips = Object.entries(draftTally)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([draft, t]) => {
-        const cls = t.live === t.total ? 'probe-chip-live' : t.live === 0 ? 'probe-chip-down' : 'probe-chip-partial';
-        return `<span class="probe-chip ${cls}">${draft}: ${t.live}/${t.total}</span>`;
-      }).join('');
-
-    let html = `
-      <div class="probe-summary ${summaryClass}">
-        <span class="probe-summary-count">${liveProbes} / ${totalProbes}</span>
-        <span class="probe-summary-label">probes live</span>
-        <span class="probe-draft-chips">${draftChips}</span>
-        <span class="probe-summary-ts">· ${data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : 'N/A'}</span>
-      </div>`;
-    html += '<table class="metrics-table">';
+    let html = '<table class="metrics-table">';
     html += `<thead><tr>
-      <th>Relay</th><th>Endpoint</th><th>Transport</th>
-      <th>Live</th><th>Drafts</th><th>Latency</th><th>Error</th>
+      <th>Endpoint</th><th>Transport</th>
+      <th>Live</th><th>Version(s)</th><th>Latency</th><th>Error</th>
     </tr></thead><tbody>`;
 
     for (const [id, relay] of Object.entries(data.relays || {})) {
@@ -107,7 +92,6 @@ export default {
         const liveClass = ep.live ? 'status-pass' : 'status-fail';
         const drafts = (ep.drafts || []).join(', ');
         html += `<tr class="${liveClass}">
-          <td>${relay.name || id}</td>
           <td class="url-cell">${ep.url || '—'}</td>
           <td>${ep.transport || '—'}</td>
           <td>${ep.live ? '✓ Live' : '✗ Down'}</td>
@@ -115,19 +99,6 @@ export default {
           <td>${ep.latency_ms != null ? ep.latency_ms + ' ms' : '—'}</td>
           <td>${ep.error || '—'}</td>
         </tr>`;
-
-        for (const probe of ep.probes || []) {
-          const pClass = probe.live ? 'status-pass' : 'status-fail';
-          html += `<tr class="probe-detail ${pClass}">
-            <td></td>
-            <td class="indent">↳ ${probe.alpn || 'Probe'}</td>
-            <td>${probe.draft || '—'}</td>
-            <td>${probe.live ? '✓' : '✗'}</td>
-            <td>${probe.version_hex || '—'}</td>
-            <td></td>
-            <td>${probe.error || '—'}</td>
-          </tr>`;
-        }
       }
     }
 
@@ -138,12 +109,6 @@ export default {
   getSummary() {
     if (this._totalProbes == null) return null;
     const down = this._totalProbes - this._liveProbes;
-    /*
-    const draftParts = Object.entries(this._draftTally || {})
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([d, t]) => `${d}: ${t.live}/${t.total}`)
-      .join(', ');
-    */
     const base = `Probes: ${this._liveProbes} live / ${down} down`;
     return base;
   },

@@ -4,7 +4,7 @@
   "description": "Runs the MoQ interoperability test suite against a relay, testing protocol-level operations like goaway, subscribe, publish, fetch, and error handling.",
   "category": "conformance",
   "docker": {
-    "image": "moq-interop:latest",
+    "image": "ghcr.io/openmoq/moq-interop:v0.1.1",
     "command": [],
     "network": "host",
     "extraHosts": ["host.docker.internal:host-gateway"]
@@ -40,6 +40,7 @@
       "enabled": true,
       "order": 2,
       "label": "Interop Tests (WebTransport)",
+      "selfTestTransport": "WT",
       "defaults": {
         "tests": "GoawayTest,MaxRequestIdTest,PublishNamespaceDoneTest,PublishNamespaceTest,PublishTest,SubscribeErrorTest,SubscribeNamespaceTest,SubscribeTest,SubscribeUpdateTest"
       }

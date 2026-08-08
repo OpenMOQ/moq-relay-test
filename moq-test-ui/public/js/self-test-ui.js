@@ -87,6 +87,13 @@ export class SelfTestUI {
   onProgress(data) {
     if (data.status === 'started') {
       this.selfTestId = data.selfTestId;
+      const selected = new Set(data.tools || []);
+      for (const [label, row] of this.rows.entries()) {
+        if (!selected.has(label)) {
+          row.details.remove();
+          this.rows.delete(label);
+        }
+      }
       return;
     }
 

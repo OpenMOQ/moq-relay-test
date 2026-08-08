@@ -45,7 +45,7 @@ export default {
   container: null,
   chart: null,
   rows: [],
-  latencyThreshold: 100,  // ms, updated from header line
+  latencyThreshold: 100,  // normalized to ms
 
   init(containerEl) {
     this.container = containerEl;
@@ -201,9 +201,11 @@ export default {
   },
 
   onLine(line) {
-    // Parse latency threshold from header: "  latency threshold:  100 ms"
-    const threshMatch = line.match(/latency threshold:\s*([\d.]+)\s*ms/i);
-    if (threshMatch) { this.latencyThreshold = parseFloat(threshMatch[1]); }
+    // Parse latency threshold from header, supporting us/ms values.
+    const threshMatch = line.match(/latency threshold:\s*([\d.]+)\s*(us|ms)?/i);
+    if (threshMatch) {
+      this.latencyThreshold = this._parseDurationMs(`${threshMatch[1]}${threshMatch[2] || 'ms'}`);
+    }
 
     if (
       line.includes('────') || line.includes('══') ||
@@ -232,8 +234,8 @@ export default {
       targetBW:    this._parseMbps(col1[1]),
       actualTx:    this._parseMbps(col2[0]),
       actualRx:    this._parseMbps(col2[1]),
-      latencyMean: this._parseMs(col3[0]),
-      latencyP90:  this._parseMs(col3[1]),
+      latencyMean: this._parseDurationMs(col3[0]),
+      latencyP90:  this._parseDurationMs(col3[1]),
       action:      col4.slice(1).join(' '),
     };
     this.rows.push(row);
@@ -284,10 +286,15 @@ export default {
     return v;
   },
 
-  _parseMs(s) {
+  _parseDurationMs(s) {
     if (!s || s === '—') return null;
-    const m = s.match(/^([\d.]+)ms$/);
-    return m ? parseFloat(m[1]) : null;
+    const m = s.match(/^([\d.]+)\s*(us|ms|s)$/i);
+    if (!m) return null;
+    const value = parseFloat(m[1]);
+    const unit = m[2].toLowerCase();
+    if (unit === 'us') return value / 1000;
+    if (unit === 's') return value * 1000;
+    return value;
   },
 
   getSummary() {

@@ -13,8 +13,10 @@ This is a performance/characterization test, not a strict protocol conformance t
 | relay_url | url | yes | (empty) | Relay endpoint URL |
 | draft | select | no | 16 | Draft 16 or 14 |
 | sub_mbps | number | no | 10 | Initial target bandwidth |
+| step_mbps | number | no | 10 | Ramp step size |
+| max_mbps | number | no | 10000 | Maximum bitrate cap |
 | interval | number | no | 5 | Reporting interval (seconds) |
-| duration | number | no | 60 | Run limit in seconds (0 means unlimited in UI model) |
+| duration | number | no | 60 | Hard wall-clock cap in seconds |
 
 ## How Invocation Works
 
@@ -27,12 +29,12 @@ Container image and entrypoint:
 Arguments assembled by the runner:
 
 ```text
--r {relay_url} --draft {draft} --sub-mbps {sub_mbps} --interval {interval}
+-r {relay_url} --draft {draft} --sub-mbps {sub_mbps} --step-mbps {step_mbps} --max-mbps {max_mbps} --interval {interval} -t {duration}
 ```
 
 Notes:
 
-- `duration` is enforced by the runner as a container runtime limit (stop timer), not as a CLI argument.
+- `duration` is passed directly to the tool as `-t/--duration`.
 - Network mode is `host`.
 
 ## What Output Looks Like

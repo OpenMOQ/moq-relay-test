@@ -5,3 +5,6 @@ interop_tests/build/
 **/.scratch/
 **/.getdeps-scratch/
 .DS_Store
+.local/
+node_modules/
+moq-test-ui/results/

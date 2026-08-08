@@ -72,12 +72,20 @@ export class ResultsStore {
         try {
           const filepath = path.join(dir, file);
           const stat = fs.statSync(filepath);
+          const meta = JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+          // Self-test results store exitCode/relayUrl differently
+          const exitCode = meta.exitCode !== undefined
+            ? meta.exitCode
+            : (meta.tools?.every(t => t.status === 'pass') && !meta.aborted ? 0 : 1);
+          const relayUrl = meta.params?.relay_url ?? meta.relayUrl;
           results.push({
             tool: toolName,
             filename: file,
             path: filepath,
             size: stat.size,
             mtime: stat.mtime.toISOString(),
+            exitCode,
+            relayUrl,
           });
         } catch (err) {
           // Skip unreadable files

@@ -18,7 +18,7 @@
     <span class="header-title">Test Tools</span>
     <nav>
       <button class="nav-btn active" data-view="tools">Tools</button>
-      <button class="nav-btn" data-view="self-test">Automated Tests</button>
+      <button class="nav-btn" data-view="self-test">Test suite</button>
       <button class="nav-btn" data-view="history">History</button>
     </nav>
     <div id="connection-status" class="status-dot disconnected" title="Disconnected"></div>
@@ -76,7 +76,7 @@
     <section id="view-self-test" class="view hidden">
       <div class="self-test-layout">
         <div class="self-test-config">
-          <h2>Relay Self-Test</h2>
+          <h2>Relay Test Suite</h2>
           <p>Run all tools against a relay to verify its health and conformance.</p>
           <form id="self-test-form">
             <div class="form-group">
@@ -86,13 +86,15 @@
             <div class="form-group">
               <label for="st-transport">Transport</label>
               <select id="st-transport">
+                <option value="all">QUIC + WebTransport (H3)</option>
                 <option value="Q">QUIC</option>
                 <option value="WT">WebTransport (H3)</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="st-draft">Draft Version</label>
+              <label for="st-draft">Version</label>
               <select id="st-draft">
+                <!--<option value="18">Draft 18</option>-->
                 <option value="16">Draft 16</option>
                 <option value="14">Draft 14</option>
               </select>
@@ -125,7 +127,8 @@
           <tr>
             <th>Tool</th>
             <th>Started</th>
-            <th>Exit Code</th>
+            <th>Relay</th>
+            <th>Summary</th>
             <th>Actions</th>
           </tr>
         </thead>
