@@ -468,6 +468,68 @@ main { height: calc(100vh - 52px); overflow: hidden; }
 .auth-badge-pass { background: rgba(63, 185, 80, 0.15); color: var(--green); }
 .auth-badge-fail { background: rgba(248, 81, 73, 0.15); color: var(--red);   }
 
+/* ── Auth-token-generator renderer ───────────────────────────── */
+.renderer-auth-token {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.auth-token-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.auth-token-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.auth-token-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.auth-token-subtitle {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+.auth-token-value {
+  width: 100%;
+  resize: vertical;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  padding: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.auth-token-value:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.15);
+}
+.auth-token-live {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+.auth-token-live-line {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
 /* ── Adaptive-bench graph ─────────────────────────────────────── */
 .renderer-adaptive {
   padding: 0.25rem 0;

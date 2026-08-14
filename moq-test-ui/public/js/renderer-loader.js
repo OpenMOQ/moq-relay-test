@@ -6,6 +6,7 @@ export class RendererLoader {
     this.renderer = null;
     this.containerEl = null;
     this._pending = null; // lines buffered while import is in-flight
+    this._pendingComplete = null; // exitCode buffered while import is in-flight
   }
 
   async load(toolName, containerEl) {
@@ -14,6 +15,7 @@ export class RendererLoader {
     containerEl.innerHTML = '';
     this.autoScroll = true;
     this._pending = []; // start buffering
+    this._pendingComplete = null;
 
     // Auto-scroll detection for renderer container
     containerEl.addEventListener('scroll', () => {
@@ -33,10 +35,16 @@ export class RendererLoader {
       for (const line of buffered) {
         this._dispatch(line);
       }
+      if (this._pendingComplete !== null) {
+        const exitCode = this._pendingComplete;
+        this._pendingComplete = null;
+        this.onComplete(exitCode);
+      }
     } catch (err) {
       console.log(`No renderer for ${toolName}:`, err.message);
       this.renderer = null;
       this._pending = null;
+      this._pendingComplete = null;
     }
   }
 
@@ -67,6 +75,12 @@ export class RendererLoader {
   }
 
   onComplete(exitCode) {
+    if (this._pending !== null) {
+      // Renderer module is still loading; defer completion callback.
+      this._pendingComplete = exitCode;
+      return;
+    }
+
     if (this.renderer?.onComplete) {
       try {
         this.renderer.onComplete(exitCode, {});
@@ -95,6 +109,8 @@ export class RendererLoader {
       }
     }
     this.renderer = null;
+    this._pending = null;
+    this._pendingComplete = null;
     if (this.containerEl) {
       this.containerEl.innerHTML = '';
     }
