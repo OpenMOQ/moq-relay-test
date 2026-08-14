@@ -88,7 +88,7 @@ main { height: calc(100vh - 52px); overflow: hidden; }
 
 /* ── Sidebar ──────────────────────────────────────────────────── */
 #tool-sidebar {
-  width: 260px;
+  width: 300px;
   min-width: 220px;
   border-right: 1px solid var(--border);
   padding: 1rem;
@@ -141,8 +141,31 @@ main { height: calc(100vh - 52px); overflow: hidden; }
   margin-bottom: 0.5rem;
 }
 .active-run {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   font-size: 0.85rem;
-  padding: 0.3rem 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.active-run:hover {
+  background: var(--bg-hover);
+  border-color: var(--border);
+}
+.active-run:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.15);
 }
 .run-id {
   font-family: var(--font-mono);
@@ -259,6 +282,10 @@ main { height: calc(100vh - 52px); overflow: hidden; }
   color: #fff;
 }
 .btn-danger:hover { background: #f85149; }
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 .btn-small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
 
 /* ── Output ───────────────────────────────────────────────────── */
@@ -271,10 +298,20 @@ main { height: calc(100vh - 52px); overflow: hidden; }
 }
 .output-header h3 { font-size: 1rem; }
 
+#cli-debug-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.cli-output-toggle {
+  margin-left: 0.5rem;
+}
+
 #filter-toggles {
   display: flex;
   gap: 0.75rem;
-  margin-left: auto;
 }
 .filter-toggle {
   display: flex;
@@ -396,6 +433,40 @@ main { height: calc(100vh - 52px); overflow: hidden; }
 }
 .renderer-summary.success { background: rgba(63, 185, 80, 0.1); border: 1px solid var(--green); color: var(--green); }
 .renderer-summary.failure { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--red); color: var(--red); }
+
+/* ── Connection-test renderer ─────────────────────────────────── */
+.conn-progress-line   { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted); padding: 0.1rem 0; }
+.conn-checks-table    { margin-bottom: 1rem; }
+.conn-section-title   { font-size: 0.85rem; color: var(--text-muted); margin: 1rem 0 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.conn-detail          { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted); word-break: break-all; }
+.conn-err-abbrev      { font-family: var(--font-mono); font-size: 0.8rem; }
+.conn-icon            { font-style: normal; font-weight: 700; margin-right: 0.25rem; }
+.conn-pass            { color: var(--green); }
+.conn-fail            { color: var(--red); }
+.conn-warn            { color: var(--yellow); }
+.conn-muted           { color: var(--text-muted); }
+
+/* ── Auth-test renderer ───────────────────────────────────────── */
+.auth-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+.auth-info-sep { color: var(--border); }
+.auth-ns code  { font-size: 0.8rem; }
+.auth-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.auth-badge-pass { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+.auth-badge-fail { background: rgba(248, 81, 73, 0.15); color: var(--red);   }
 
 /* ── Adaptive-bench graph ─────────────────────────────────────── */
 .renderer-adaptive {

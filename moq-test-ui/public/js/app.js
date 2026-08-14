@@ -10,6 +10,8 @@ class App {
     this.tools = [];
     this.selectedTool = null;
     this.currentRunId = null;
+    this.runStateByTool = new Map(); // toolName -> { runId, status, lines, exitCode }
+    this.toolByRunId = new Map();    // runId -> toolName
     this.paramForm = new ParamForm();
     this.outputPanel = new OutputPanel();
     this.rendererLoader = new RendererLoader();
@@ -41,10 +43,13 @@ class App {
       btn.addEventListener('click', () => this.switchView(btn.dataset.view));
     });
 
+    // Show CLI output toggle
+    document.getElementById('show-cli-output').addEventListener('change', () => this.applyCliOutputVisibility());
+
     // Run / Stop
     document.getElementById('btn-run').addEventListener('click', () => this.startRun());
     document.getElementById('btn-stop').addEventListener('click', () => this.stopRun());
-    document.getElementById('btn-clear-output').addEventListener('click', () => this.outputPanel.clear());
+    document.getElementById('btn-clear-output').addEventListener('click', () => this.clearSelectedOutput());
 
     // Self-test
     document.getElementById('self-test-form').addEventListener('submit', (e) => {
@@ -114,6 +119,11 @@ class App {
       grouped[cat].push(tool);
     }
 
+    // Sort tools within each category by their declared order, then alphabetically
+    for (const cat of Object.keys(grouped)) {
+      grouped[cat].sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.displayName.localeCompare(b.displayName));
+    }
+
     const order = [
       ...CATEGORY_ORDER.filter(c => grouped[c]),
       ...Object.keys(grouped).filter(c => !CATEGORY_ORDER.includes(c)),
@@ -156,10 +166,9 @@ class App {
     this.outputPanel.setFilters(this.selectedTool.filters);
     this.rendererLoader.unload();
 
-    document.getElementById('output-section').classList.add('hidden');
-    document.getElementById('btn-run').classList.remove('hidden');
-    document.getElementById('btn-stop').classList.add('hidden');
-    this.currentRunId = null;
+    document.getElementById('show-cli-output').checked = false;
+    this.restoreSelectedToolView();
+    this.applyCliOutputVisibility();
   }
 
   startRun() {
@@ -167,72 +176,253 @@ class App {
     const params = this.paramForm.getValues();
     if (!params) return; // Validation failed
 
+    const state = this.getOrCreateToolState(this.selectedTool.name);
+    state.lines = [];
+    state.runId = null;
+    state.status = 'starting';
+    state.exitCode = null;
+
     this.ws.send('start-run', { toolId: this.selectedTool.name, params });
-    document.getElementById('btn-run').classList.add('hidden');
-    document.getElementById('btn-stop').classList.remove('hidden');
+    document.getElementById('output-section').classList.remove('hidden');
+    this.outputPanel.clear();
+    this.updateRunButtonsForSelectedTool();
+    this.updateActiveRuns();
   }
 
   stopRun() {
-    if (this.currentRunId) {
-      this.ws.send('stop-run', { runId: this.currentRunId });
-    }
+    if (!this.selectedTool) return;
+    const state = this.runStateByTool.get(this.selectedTool.name);
+    if (!state?.runId) return;
+    if (state.status === 'stopping' || state.status === 'starting') return;
+
+    state.status = 'stopping';
+    this.updateRunButtonsForSelectedTool();
+    this.updateActiveRuns();
+    this.ws.send('stop-run', { runId: state.runId });
   }
 
   onRunStarted(data) {
-    this.currentRunId = data.runId;
-    this.outputPanel.clear();
-    document.getElementById('output-section').classList.remove('hidden');
+    const toolName = data.toolId;
+    if (!toolName) return;
 
-    // Load renderer if tool has one
-    if (this.selectedTool?.hasRenderer) {
-      this.rendererLoader.load(this.selectedTool.name, document.getElementById('renderer-container'));
-      document.getElementById('renderer-container').classList.remove('hidden');
+    const state = this.getOrCreateToolState(toolName);
+    state.runId = data.runId;
+    state.status = 'running';
+    state.exitCode = null;
+    this.toolByRunId.set(data.runId, toolName);
+
+    if (this.selectedTool?.name === toolName) {
+      this.currentRunId = data.runId;
+      document.getElementById('output-section').classList.remove('hidden');
+
+      // Load renderer if selected tool has one
+      if (this.selectedTool.hasRenderer) {
+        this.rendererLoader.load(this.selectedTool.name, document.getElementById('renderer-container'));
+        document.getElementById('renderer-container').classList.remove('hidden');
+      }
+
+      this.updateRunButtonsForSelectedTool();
     }
 
     this.updateActiveRuns();
   }
 
   onOutput(data) {
-    this.outputPanel.appendLine(data.line, data.ts);
-    this.rendererLoader.onLine(data.line);
+    const toolName = this.toolByRunId.get(data.runId);
+    if (!toolName) return;
+
+    const state = this.getOrCreateToolState(toolName);
+    state.lines.push({ type: 'line', line: data.line, ts: data.ts });
+
+    if (this.selectedTool?.name === toolName) {
+      this.outputPanel.appendLine(data.line, data.ts);
+      this.rendererLoader.onLine(data.line);
+    }
   }
 
   onRunComplete(data) {
-    this.outputPanel.appendSystem(`\n--- Run complete (exit code: ${data.exitCode}) ---`);
-    this.rendererLoader.onComplete(data.exitCode);
-    document.getElementById('btn-run').classList.remove('hidden');
-    document.getElementById('btn-stop').classList.add('hidden');
-    this.currentRunId = null;
+    this.finalizeRunState(data.runId, {
+      status: 'complete',
+      exitCode: data.exitCode,
+      systemText: `\n--- Run complete (exit code: ${data.exitCode}) ---`,
+    });
+
+    if (data.runId && this.selectedTool && this.currentRunId === data.runId) {
+      this.outputPanel.appendSystem(`\n--- Run complete (exit code: ${data.exitCode}) ---`);
+      this.rendererLoader.onComplete(data.exitCode);
+      this.currentRunId = null;
+      this.updateRunButtonsForSelectedTool();
+    }
+
     this.updateActiveRuns();
   }
 
   onRunError(data) {
-    this.outputPanel.appendSystem(`\n--- Error: ${data.error} ---`);
-    document.getElementById('btn-run').classList.remove('hidden');
-    document.getElementById('btn-stop').classList.add('hidden');
-    this.currentRunId = null;
+    if (!data.runId) {
+      if (this.selectedTool) {
+        const state = this.getOrCreateToolState(this.selectedTool.name);
+        state.status = 'idle';
+        state.exitCode = null;
+        state.lines.push({ type: 'system', text: `\n--- Error: ${data.error} ---` });
+        this.restoreSelectedToolView();
+      }
+      this.updateActiveRuns();
+      return;
+    }
+
+    this.finalizeRunState(data.runId, {
+      status: 'error',
+      exitCode: null,
+      systemText: `\n--- Error: ${data.error} ---`,
+    });
+
+    if (this.selectedTool && data.runId && this.currentRunId === data.runId) {
+      this.outputPanel.appendSystem(`\n--- Error: ${data.error} ---`);
+      this.currentRunId = null;
+      this.updateRunButtonsForSelectedTool();
+    }
+
     this.updateActiveRuns();
   }
 
   onRunStopped(data) {
-    this.outputPanel.appendSystem('\n--- Run stopped ---');
-    document.getElementById('btn-run').classList.remove('hidden');
-    document.getElementById('btn-stop').classList.add('hidden');
-    this.currentRunId = null;
+    this.finalizeRunState(data.runId, {
+      status: 'stopped',
+      exitCode: null,
+      systemText: '\n--- Run stopped ---',
+    });
+
+    if (data.runId && this.selectedTool && this.currentRunId === data.runId) {
+      this.outputPanel.appendSystem('\n--- Run stopped ---');
+      this.currentRunId = null;
+      this.updateRunButtonsForSelectedTool();
+    }
+
     this.updateActiveRuns();
   }
 
   updateActiveRuns() {
     const list = document.getElementById('active-runs-list');
     const runs = [];
-    if (this.currentRunId) {
-      runs.push({ runId: this.currentRunId, tool: this.selectedTool?.name });
+    for (const [tool, state] of this.runStateByTool.entries()) {
+      if (state.status === 'starting' || state.status === 'running' || state.status === 'stopping') {
+        runs.push({ runId: state.runId, tool, status: state.status });
+      }
     }
     if (runs.length === 0) {
       list.innerHTML = '<p class="muted">No active runs</p>';
     } else {
-      list.innerHTML = runs.map(r => `<div class="active-run">${r.tool} <span class="run-id">${r.runId.slice(0, 8)}</span></div>`).join('');
+      list.innerHTML = runs.map(r => {
+        const runLabel = r.runId ? r.runId.slice(0, 8) : 'starting';
+        const title = `Switch to ${r.tool}`;
+        return `<button type="button" class="active-run" data-tool="${r.tool}" title="${title}">${r.tool} <span class="run-id">${runLabel}</span></button>`;
+      }).join('');
+
+      list.querySelectorAll('.active-run[data-tool]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const tool = el.dataset.tool;
+          if (tool) this.selectTool(tool);
+        });
+      });
     }
+  }
+
+  getOrCreateToolState(toolName) {
+    if (!this.runStateByTool.has(toolName)) {
+      this.runStateByTool.set(toolName, {
+        runId: null,
+        status: 'idle',
+        lines: [],
+        exitCode: null,
+      });
+    }
+    return this.runStateByTool.get(toolName);
+  }
+
+  finalizeRunState(runId, { status, exitCode, systemText }) {
+    if (!runId) return;
+    const toolName = this.toolByRunId.get(runId);
+    if (!toolName) return;
+
+    const state = this.getOrCreateToolState(toolName);
+    state.status = status;
+    state.exitCode = exitCode;
+    if (systemText) {
+      state.lines.push({ type: 'system', text: systemText });
+    }
+
+    this.toolByRunId.delete(runId);
+  }
+
+  applyCliOutputVisibility() {
+    const show = document.getElementById('show-cli-output').checked;
+    document.getElementById('terminal-container').classList.toggle('hidden', !show);
+    document.getElementById('cli-debug-controls').classList.toggle('hidden', !show);
+  }
+
+  clearSelectedOutput() {
+    if (!this.selectedTool) return;
+    const state = this.getOrCreateToolState(this.selectedTool.name);
+    state.lines = [];
+    this.outputPanel.clear();
+  }
+
+  restoreSelectedToolView() {
+    if (!this.selectedTool) return;
+
+    const state = this.runStateByTool.get(this.selectedTool.name);
+    const hasLines = Boolean(state && state.lines.length > 0);
+    const isRunning = Boolean(state && (state.status === 'starting' || state.status === 'running' || state.status === 'stopping'));
+
+    document.getElementById('output-section').classList.toggle('hidden', !hasLines && !isRunning);
+    this.updateRunButtonsForSelectedTool();
+
+    this.currentRunId = isRunning ? state.runId : null;
+
+    this.outputPanel.clear();
+    this.rendererLoader.unload();
+
+    const rendererContainer = document.getElementById('renderer-container');
+    rendererContainer.classList.add('hidden');
+
+    if (!state) return;
+
+    if (this.selectedTool.hasRenderer) {
+      this.rendererLoader.load(this.selectedTool.name, rendererContainer).then(() => {
+        for (const entry of state.lines) {
+          if (entry.type === 'line') {
+            this.rendererLoader.onLine(entry.line);
+          }
+        }
+        if (state.status !== 'starting' && state.status !== 'running' && state.exitCode !== null) {
+          this.rendererLoader.onComplete(state.exitCode);
+        }
+      });
+      rendererContainer.classList.remove('hidden');
+    }
+
+    for (const entry of state.lines) {
+      if (entry.type === 'line') {
+        this.outputPanel.appendLine(entry.line, entry.ts);
+      } else if (entry.type === 'system') {
+        this.outputPanel.appendSystem(entry.text);
+      }
+    }
+  }
+
+  updateRunButtonsForSelectedTool() {
+    const runBtn = document.getElementById('btn-run');
+    const stopBtn = document.getElementById('btn-stop');
+    if (!runBtn || !stopBtn) return;
+
+    const state = this.selectedTool ? this.runStateByTool.get(this.selectedTool.name) : null;
+    const isBusy = Boolean(state && (state.status === 'starting' || state.status === 'running' || state.status === 'stopping'));
+    const isStopping = Boolean(state && state.status === 'stopping');
+
+    runBtn.classList.toggle('hidden', isBusy);
+    stopBtn.classList.toggle('hidden', !isBusy);
+    stopBtn.disabled = isStopping;
+    stopBtn.textContent = isStopping ? 'Stopping...' : 'Stop';
   }
 
   startSelfTest() {

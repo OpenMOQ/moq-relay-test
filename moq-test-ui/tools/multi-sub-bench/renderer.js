@@ -17,16 +17,18 @@ Chart.register(
   Tooltip, Legend,
 );
 
-export default {
-  container: null,
-  chart: null,
+export default class {
+  constructor() {
+    this.container = null;
+    this.chart = null;
 
-  // Live progress tracking  [{ timeLabel, complete, active }]
-  _progress: [],
-  _totalSubs: null,
+    // Live progress tracking  [{ timeLabel, complete, active }]
+    this._progress = [];
+    this._totalSubs = null;
 
-  // Final results
-  _summary: null,   // { ok, total, errors, resets, objects, objAvg, mbps, mbpsAvg, latency }
+    // Final results
+    this._summary = null;   // { ok, total, errors, resets, objects, objAvg, mbps, mbpsAvg, latency }
+  }
 
   init(containerEl) {
     this.container = containerEl;
@@ -130,7 +132,7 @@ export default {
         },
       },
     });
-  },
+  }
 
   onLine(line) {
     const stripped = line.replace(/\x1b\[[0-9;]*m/g, '').trim();
@@ -187,7 +189,7 @@ export default {
       this._summary.latency = parseFloat(latLine[1]);
       return;
     }
-  },
+  }
 
   _updateChart() {
     const { chart, _progress } = this;
@@ -200,7 +202,7 @@ export default {
       chart.options.scales.y.max = this._totalSubs + Math.ceil(this._totalSubs * 0.05);
     }
     chart.update('none');
-  },
+  }
 
   getSummary() {
     const s = this._summary;
@@ -210,7 +212,7 @@ export default {
     if (s.mbps != null)    parts.push(`Output: ${s.mbps.toFixed(2)}Mbps`);
     if (s.latency != null) parts.push(`Latency: ${s.latency}ms`);
     return parts.join(', ');
-  },
+  }
 
   _passed() {
     const s = this._summary;
@@ -218,7 +220,7 @@ export default {
     const allOk    = s.ok != null && s.total != null && s.ok === s.total;
     const lowLat   = s.latency != null && s.latency < 100;
     return allOk && lowLat;
-  },
+  }
 
   onComplete(exitCode) {
     if (!this.container) return;
@@ -250,12 +252,12 @@ export default {
     summaryEl.className = `renderer-summary ${cls}`;
     summaryEl.textContent = this.getSummary() || 'Benchmark complete';
     this.container.appendChild(summaryEl);
-  },
+  }
 
   destroy() {
     if (this.chart) { this.chart.destroy(); this.chart = null; }
     this.container = null;
     this._progress = [];
     this._summary = null;
-  },
-};
+  }
+}

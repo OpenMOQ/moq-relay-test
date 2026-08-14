@@ -8,3 +8,4 @@ interop_tests/build/
 .local/
 node_modules/
 moq-test-ui/results/
+tools-inprogress/

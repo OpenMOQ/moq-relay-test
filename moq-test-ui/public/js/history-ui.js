@@ -138,8 +138,8 @@ export class HistoryUI {
           <span>Relay: ${_escapeHtml(r.relayUrl || '—')}</span>
         </div>
         <div class="result-tabs">
-          <button class="result-tab-btn active" data-tab="result">Show result</button>
-          <button class="result-tab-btn" data-tab="debug">Debug output</button>
+          <button class="result-tab-btn active" data-tab="result">Result</button>
+          <button class="result-tab-btn" data-tab="debug">CLI output</button>
         </div>
         <div class="result-tab-panel" data-panel="result">
           <div class="st-history-tool-list"></div>

@@ -68,6 +68,7 @@ export class ToolRegistry {
       displayName: t.displayName,
       description: t.description,
       category: t.category,
+      order: t.order ?? 999,
       parameters: t.parameters,
       filters: t.filters || [],
       hasRenderer: t._hasRenderer,

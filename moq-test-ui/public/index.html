@@ -59,12 +59,17 @@
             <div id="output-section" class="hidden">
               <div class="output-header">
                 <h3>Output</h3>
-                <div id="filter-toggles"></div>
-                <button id="btn-clear-output" class="btn btn-small">Clear</button>
+                <label class="filter-toggle cli-output-toggle">
+                  <input type="checkbox" id="show-cli-output"> Show CLI output
+                </label>
+                <div id="cli-debug-controls" class="hidden">
+                  <div id="filter-toggles"></div>
+                  <button id="btn-clear-output" class="btn btn-small">Clear</button>
+                </div>
               </div>
               <div id="output-panels">
                 <div id="renderer-container" class="hidden"></div>
-                <div id="terminal-container"></div>
+                <div id="terminal-container" class="hidden"></div>
               </div>
             </div>
           </div>

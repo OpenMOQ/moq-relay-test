@@ -2,15 +2,17 @@
  * Renderer for conformance tests: tracks test progress, shows pass/fail table,
  * and section summaries.
  */
-export default {
-  container: null,
-  tests: [],
-  currentTest: null,
-  currentSection: null,
-  sections: new Map(),
-  totalTests: 0,
-  passed: 0,
-  failed: 0,
+export default class {
+  constructor() {
+    this.container = null;
+    this.tests = [];
+    this.currentTest = null;
+    this.currentSection = null;
+    this.sections = new Map();
+    this.totalTests = 0;
+    this.passed = 0;
+    this.failed = 0;
+  }
 
   init(containerEl) {
     this.container = containerEl;
@@ -43,7 +45,7 @@ export default {
         </table>
       </div>
     `;
-  },
+  }
 
   onLine(line) {
     const trimmed = line.trim();
@@ -96,7 +98,7 @@ export default {
       }
       return;
     }
-  },
+  }
 
   appendTestRow(test) {
     const tbody = this.container?.querySelector('#conformance-tbody');
@@ -110,7 +112,7 @@ export default {
       <td class="test-status">◉ Running</td>
     `;
     tbody.appendChild(tr);
-  },
+  }
 
   updateTestRow(test) {
     const tr = this.container?.querySelector(`#test-row-${test.num}`);
@@ -122,7 +124,7 @@ export default {
     } else {
       statusCell.textContent = `✗ FAILED${test.reason ? ': ' + test.reason : ''}`;
     }
-  },
+  }
 
   updateSummary() {
     const el = this.container?.querySelector('#conformance-summary');
@@ -132,12 +134,12 @@ export default {
       <span class="summary-passed">Passed: ${this.passed}</span>
       <span class="summary-failed">Failed: ${this.failed}</span>
     `;
-  },
+  }
 
   getSummary() {
     if (this.totalTests === 0) return null;
     return `Tests: ${this.passed} pass / ${this.failed} fail`;
-  },
+  }
 
   onComplete(exitCode) {
     if (!this.container) return;
@@ -160,7 +162,7 @@ export default {
     summary.className = `renderer-summary ${this.failed === 0 && exitCode === 0 ? 'success' : 'failure'}`;
     summary.textContent = this.getSummary() || 'Complete';
     this.container.appendChild(summary);
-  },
+  }
 
   destroy() {
     this.container = null;
@@ -169,4 +171,4 @@ export default {
     this.currentSection = null;
     this.sections = new Map();
   }
-};
+}

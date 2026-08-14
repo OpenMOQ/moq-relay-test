@@ -1,13 +1,15 @@
 /**
  * Renderer for interop tests: tracks test pass/fail, shows progress table.
  */
-export default {
-  container: null,
-  tests: [],
-  currentTest: null,
-  totalExpected: 0,
-  passed: 0,
-  failed: 0,
+export default class {
+  constructor() {
+    this.container = null;
+    this.tests = [];
+    this.currentTest = null;
+    this.totalExpected = 0;
+    this.passed = 0;
+    this.failed = 0;
+  }
 
   init(containerEl) {
     this.container = containerEl;
@@ -36,7 +38,7 @@ export default {
         </table>
       </div>
     `;
-  },
+  }
 
   onLine(line) {
     const trimmed = line.trim();
@@ -96,7 +98,7 @@ export default {
       }
       return;
     }
-  },
+  }
 
   appendTestRow(test) {
     const tbody = this.container?.querySelector('#interop-tbody');
@@ -111,7 +113,7 @@ export default {
       <td class="test-status">◉ Running</td>
     `;
     tbody.appendChild(tr);
-  },
+  }
 
   updateTestRow(test) {
     const tr = this.container?.querySelector(`#interop-row-${test.num}`);
@@ -125,7 +127,7 @@ export default {
     } else if (test.status === 'fail') {
       statusCell.textContent = `✗ FAILED${test.reason ? ': ' + test.reason : ''}`;
     }
-  },
+  }
 
   updateSummary() {
     const el = this.container?.querySelector('#interop-summary');
@@ -137,12 +139,12 @@ export default {
       <span class="summary-failed">Failed: ${this.failed}</span>
       ${running > 0 ? `<span class="summary-running">Running: ${running}</span>` : ''}
     `;
-  },
+  }
 
   getSummary() {
     if (this.tests.length === 0) return null;
     return `Tests: ${this.passed} pass / ${this.failed} fail`;
-  },
+  }
 
   onComplete(exitCode) {
     if (!this.container) return;
@@ -150,11 +152,11 @@ export default {
     summary.className = `renderer-summary ${this.failed === 0 && exitCode === 0 ? 'success' : 'failure'}`;
     summary.textContent = this.getSummary() || 'Complete';
     this.container.appendChild(summary);
-  },
+  }
 
   destroy() {
     this.container = null;
     this.tests = [];
     this.currentTest = null;
   }
-};
+}
