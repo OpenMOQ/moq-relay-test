@@ -7,6 +7,15 @@ import { HistoryUI } from './history-ui.js';
 
 class App {
   constructor() {
+    this.endpointCookieName = 'moq_test_ui_endpoint_url';
+    this.endpointQueryValue = null;
+    this.autoRunRequested = false;
+    this.defaultEndpointUrl = '';
+    this.autoRunSelfTestStarted = false;
+    this.boundRelayInputIds = new Set();
+
+    this.initEndpointDefaults();
+
     this.tools = [];
     this.selectedTool = null;
     this.currentRunId = null;
@@ -37,6 +46,124 @@ class App {
     this.ws.connect();
   }
 
+  initEndpointDefaults() {
+    const query = new URLSearchParams(window.location.search);
+    const endpoint =
+      query.get('endpoint') ||
+      query.get('endpoint_url') ||
+      query.get('endpointUrl') ||
+      query.get('relay_url') ||
+      query.get('relayUrl') ||
+      '';
+
+    const autoRunRaw = query.get('auto_run') || query.get('autorun') || query.get('autoRun') || '';
+
+    this.endpointQueryValue = endpoint.trim();
+    this.autoRunRequested = this.parseBooleanFlag(autoRunRaw);
+
+    if (this.autoRunRequested && !this.endpointQueryValue) {
+      console.warn('Ignoring auto-run because no endpoint URL was provided in query parameters.');
+      this.autoRunRequested = false;
+    }
+
+    const cookieEndpoint = this.getCookie(this.endpointCookieName).trim();
+    this.defaultEndpointUrl = this.endpointQueryValue || cookieEndpoint;
+    if (this.endpointQueryValue) {
+      this.setEndpointUrl(this.endpointQueryValue);
+    }
+  }
+
+  parseBooleanFlag(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return ['1', 'true', 'yes', 'y', 'on'].includes(normalized);
+  }
+
+  getCookie(name) {
+    const prefix = `${name}=`;
+    const parts = document.cookie ? document.cookie.split(';') : [];
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (trimmed.startsWith(prefix)) {
+        return decodeURIComponent(trimmed.slice(prefix.length));
+      }
+    }
+    return '';
+  }
+
+  setCookie(name, value, days = 365) {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+  }
+
+  setEndpointUrl(url) {
+    const trimmed = (url || '').trim();
+    if (!trimmed) return;
+    this.defaultEndpointUrl = trimmed;
+    this.setCookie(this.endpointCookieName, trimmed);
+    this.applyEndpointToRelayInputs(trimmed);
+  }
+
+  isRelayParam(param) {
+    if (!param) return false;
+    const id = String(param.id || '').toLowerCase();
+    const label = String(param.label || '').toLowerCase();
+    return id === 'relay_url' || id === 'endpoint_url' || label.includes('relay url');
+  }
+
+  applyEndpointToRelayInputs(url) {
+    const value = (url || '').trim();
+    if (!value) return;
+
+    const selfTestRelay = document.getElementById('st-relay-url');
+    if (selfTestRelay) {
+      selfTestRelay.value = value;
+    }
+
+    if (!Array.isArray(this.paramForm?.params) || this.paramForm.params.length === 0) return;
+    for (const param of this.paramForm.params) {
+      if (!this.isRelayParam(param)) continue;
+      const input = document.getElementById(`param-${param.id}`);
+      if (input) {
+        input.value = value;
+      }
+    }
+  }
+
+  bindRelayInputSync() {
+    const selfTestRelay = document.getElementById('st-relay-url');
+    if (selfTestRelay && !this.boundRelayInputIds.has('st-relay-url')) {
+      selfTestRelay.addEventListener('change', () => {
+        const value = selfTestRelay.value.trim();
+        if (value) {
+          this.setEndpointUrl(value);
+        }
+      });
+      this.boundRelayInputIds.add('st-relay-url');
+    }
+
+    if (!Array.isArray(this.paramForm?.params)) return;
+    for (const param of this.paramForm.params) {
+      if (!this.isRelayParam(param)) continue;
+      const input = document.getElementById(`param-${param.id}`);
+      if (!input) continue;
+      if (this.boundRelayInputIds.has(input.id)) continue;
+      input.addEventListener('change', () => {
+        const value = input.value.trim();
+        if (value) {
+          this.setEndpointUrl(value);
+        }
+      });
+      this.boundRelayInputIds.add(input.id);
+    }
+  }
+
+  maybeAutoRunSelfTest() {
+    if (!this.autoRunRequested || this.autoRunSelfTestStarted) return;
+    this.autoRunSelfTestStarted = true;
+    this.switchView('self-test');
+    this.startSelfTest();
+  }
+
   bindUI() {
     // Navigation
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -57,6 +184,9 @@ class App {
       this.startSelfTest();
     });
     document.getElementById('btn-self-test-stop').addEventListener('click', () => this.stopSelfTest());
+
+    this.applyEndpointToRelayInputs(this.defaultEndpointUrl);
+    this.bindRelayInputSync();
 
     // History
     document.getElementById('btn-refresh-history').addEventListener('click', () => {
@@ -105,6 +235,7 @@ class App {
     this.renderToolList();
     this.selfTestUI.setTools(this.tools);
     this.historyUI.setTools(this.tools);
+    this.maybeAutoRunSelfTest();
   }
 
   renderToolList() {
@@ -163,6 +294,8 @@ class App {
     document.getElementById('tool-description').textContent = this.selectedTool.description || '';
 
     this.paramForm.render(this.selectedTool.parameters, document.getElementById('param-form'));
+    this.applyEndpointToRelayInputs(this.defaultEndpointUrl);
+    this.bindRelayInputSync();
     this.outputPanel.setFilters(this.selectedTool.filters);
     this.rendererLoader.unload();
 
@@ -181,6 +314,10 @@ class App {
     state.runId = null;
     state.status = 'starting';
     state.exitCode = null;
+    const endpoint = (params.relay_url || params.endpoint_url || '').trim();
+    if (endpoint) {
+      this.setEndpointUrl(endpoint);
+    }
 
     this.ws.send('start-run', { toolId: this.selectedTool.name, params });
     document.getElementById('output-section').classList.remove('hidden');
@@ -426,9 +563,12 @@ class App {
   }
 
   startSelfTest() {
-    const relayUrl = document.getElementById('st-relay-url').value;
+    const relayUrl = document.getElementById('st-relay-url').value.trim();
     const transport = document.getElementById('st-transport').value;
     const draft = document.getElementById('st-draft').value;
+    if (relayUrl) {
+      this.setEndpointUrl(relayUrl);
+    }
     this.ws.send('start-self-test', { relayUrl, transport, draft });
     document.getElementById('btn-self-test-run').classList.add('hidden');
     document.getElementById('btn-self-test-stop').classList.remove('hidden');
