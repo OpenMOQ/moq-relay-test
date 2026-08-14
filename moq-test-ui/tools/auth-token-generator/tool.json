@@ -70,6 +70,7 @@
     { "id": "debug", "label": "Hide debug", "pattern": "^\\[DEBUG\\]", "default": true }
   ],
   "renderer": "renderer.js",
+  "persistResults": false,
   "selfTest": {
     "enabled": false
   }
