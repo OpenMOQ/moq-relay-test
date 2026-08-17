@@ -1,8 +1,9 @@
 {
   "name": "multi-sub-bench",
-  "displayName": "Multi-Subscriber",
+  "displayName": "Multi-Subscriber (aiomoqt)",
   "description": "Spawns N simultaneous subscribers against a relay and measures aggregate throughput, per-subscriber latency, and success rate.",
   "category": "performance",
+  "order": 3,
   "docker": {
     "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
     "entrypoint": ["python"],

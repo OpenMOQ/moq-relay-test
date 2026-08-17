@@ -1,8 +1,9 @@
 {
   "name": "adaptive-bench",
-  "displayName": "Adaptive Bitrate",
+  "displayName": "Adaptive Bitrate (aiomoqt)",
   "description": "Adjusts publish bitrate to maintain target latency against a relay. Measures bandwidth, latency, loss, and adaptive algorithm behavior.",
   "category": "performance",
+  "order": 2,
   "docker": {
     "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
     "entrypoint": ["python"],
@@ -82,7 +83,7 @@
   "renderer": "renderer.js",
   "selfTest": {
     "enabled": true,
-    "order": 5,
+    "order": 8,
     "defaults": {
       "sub_mbps": 10,
       "step_mbps": 10,

@@ -1,0 +1,43 @@
+{
+  "name": "connection-test",
+  "displayName": "Connection Test",
+  "description": "Verifies DNS, ICMP ping, TCP reachability, and QUIC/H3 transport connectivity (with and without TLS verification).",
+  "category": "diagnostics",
+  "order": 1,
+  "docker": {
+    "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
+    "entrypoint": ["/bin/sh", "-c"],
+    "command": ["python /tmp/connection_test.py {build_args}"],
+    "network": "host"
+  },
+  "prepareFiles": [
+    {
+      "containerPath": "/tmp/connection_test.py",
+      "file": "connection_test.py",
+      "silent": true
+    }
+  ],
+  "parameters": [
+    {
+      "id": "relay_url",
+      "label": "Relay URL",
+      "type": "url",
+      "required": true,
+      "default": "",
+      "placeholder": "https://relay.example.com/moq-relay",
+      "description": "MoQT relay endpoint to test"
+    }
+  ],
+  "buildCommand": "--url {relay_url}",
+  "filters": [
+    { "id": "debug", "label": "Hide debug output", "pattern": "^\\[DEBUG\\]|^D\\d{4}", "default": true }
+  ],
+  "renderer": "renderer.js",
+  "selfTest": {
+    "enabled": true,
+    "order": 1,
+    "label": "Connection Test",
+    "selfTestTransport": "all",
+    "defaults": {}
+  }
+}

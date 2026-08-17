@@ -23,7 +23,7 @@ export class RendererLoader {
 
     try {
       const module = await import(`/tools/${toolName}/renderer.js`);
-      this.renderer = module.default;
+      this.renderer = new module.default();
       if (this.renderer?.init) {
         this.renderer.init(containerEl);
       }

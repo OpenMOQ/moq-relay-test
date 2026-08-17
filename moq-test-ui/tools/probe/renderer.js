@@ -2,11 +2,13 @@
  * Renderer for probe output: collects all stdout, extracts the JSON report,
  * and renders a relay status table on completion.
  */
-export default {
-  container: null,
-  buffer: [],
-  _liveEp: null,
-  _totalEp: 0,
+export default class {
+  constructor() {
+    this.container = null;
+    this.buffer = [];
+    this._liveEp = null;
+    this._totalEp = 0;
+  }
 
   init(containerEl) {
     this.container = containerEl;
@@ -19,14 +21,14 @@ export default {
         <div id="probe-results"><p class="muted">Waiting for probe output…</p></div>
       </div>
     `;
-  },
+  }
 
   onLine(line) {
     this.buffer.push(line);
     // Attempt parse on every line — cheap, and ensures we don't miss the closing
     // brace regardless of whether it arrives with a trailing newline or not.
     this._tryParse();
-  },
+  }
 
   _tryParse() {
     const lines = this.buffer;
@@ -48,7 +50,7 @@ export default {
         }
       }
     }
-  },
+  }
 
   _render(data) {
     const el = this.container?.querySelector('#probe-results');
@@ -104,14 +106,14 @@ export default {
 
     html += '</tbody></table>';
     el.innerHTML = html;
-  },
+  }
 
   getSummary() {
     if (this._totalProbes == null) return null;
     const down = this._totalProbes - this._liveProbes;
     const base = `Probes: ${this._liveProbes} live / ${down} down`;
     return base;
-  },
+  }
 
   onComplete(exitCode) {
     if (!this.container) return;
@@ -123,10 +125,10 @@ export default {
     summary.className = `renderer-summary ${exitCode === 0 ? 'success' : 'failure'}`;
     summary.textContent = this.getSummary() || 'Probe complete';
     this.container.appendChild(summary);
-  },
+  }
 
   destroy() {
     this.container = null;
     this.buffer = [];
-  },
-};
+  }
+}

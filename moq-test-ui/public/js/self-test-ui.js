@@ -28,10 +28,11 @@ export class SelfTestUI {
           displayName: cfg.label || t.displayName,
           label:       cfg.label || t.name,
           hasRenderer: t.hasRenderer,
+          order:       cfg.order ?? Infinity,
         });
       }
     }
-    this.tools.reverse();
+    this.tools.sort((a, b) => a.order - b.order);
   }
 
   /** Called when the user clicks Run — rebuild the list and create RendererLoaders. */

@@ -29,7 +29,7 @@ const actionBandPlugin = {
       ctx.fillRect(x1, A.top, x2 - x1, A.bottom - A.top);
     }
     ctx.restore();
-  },
+  }
 };
 
 const ACTION_COLORS = {
@@ -41,11 +41,13 @@ const ACTION_COLORS = {
   'drain':    'rgba(140,140,140,0.07)',
 };
 
-export default {
-  container: null,
-  chart: null,
-  rows: [],
-  latencyThreshold: 100,  // normalized to ms
+export default class {
+  constructor() {
+    this.container = null;
+    this.chart = null;
+    this.rows = [];
+    this.latencyThreshold = 100;  // normalized to ms
+  }
 
   init(containerEl) {
     this.container = containerEl;
@@ -198,7 +200,7 @@ export default {
         },
       },
     });
-  },
+  }
 
   onLine(line) {
     // Parse latency threshold from header, supporting us/ms values.
@@ -240,7 +242,7 @@ export default {
     };
     this.rows.push(row);
     this._updateChart();
-  },
+  }
 
   _updateChart() {
     const { chart, rows } = this;
@@ -268,12 +270,12 @@ export default {
     }
 
     chart.update('none');
-  },
+  }
 
   _parseTime(s) {
     const m = s && s.match(/^([\d.]+)s$/);
     return m ? parseFloat(m[1]) : null;
-  },
+  }
 
   _parseMbps(s) {
     if (!s || s === '—') return null;
@@ -284,7 +286,7 @@ export default {
     if (u === 'G') return v * 1000;
     if (u === 'K') return v / 1000;
     return v;
-  },
+  }
 
   _parseDurationMs(s) {
     if (!s || s === '—') return null;
@@ -295,7 +297,7 @@ export default {
     if (unit === 'us') return value / 1000;
     if (unit === 's') return value * 1000;
     return value;
-  },
+  }
 
   getSummary() {
     if (this.rows.length === 0) return null;
@@ -306,7 +308,7 @@ export default {
       ? Math.max(...qualifying.map(r => r.actualRx))
       : Math.max(...this.rows.map(r => r.actualRx ?? 0));
     return `Peak: ${peak.toFixed(0)}Mbps (< ${thresh}ms latency)`;
-  },
+  }
 
   onComplete(exitCode) {
     if (!this.container) return;
@@ -315,11 +317,11 @@ export default {
     summary.className = 'renderer-summary success';
     summary.textContent = this.getSummary() || 'Benchmark complete';
     this.container.appendChild(summary);
-  },
+  }
 
   destroy() {
     if (this.chart) { this.chart.destroy(); this.chart = null; }
     this.container = null;
     this.rows = [];
-  },
-};
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "name": "moq-interop-runner",
+  "displayName": "MOQ Interop Runner",
+  "description": "Runs aiomoqt's moq_interop_client interoperability suite with TAP output against a relay.",
+  "category": "conformance",
+  "order": 3,
+  "docker": {
+    "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
+    "entrypoint": ["/bin/sh", "-c"],
+    "command": ["URL=\"$0\"; DRAFT=\"$1\"; TRANSPORT=\"$2\"; TOKEN=\"${3:-}\"; URL=\"${URL#moqt://}\"; URL=\"${URL#https://}\"; URL=\"${URL#http://}\"; if [ \"$TRANSPORT\" = \"quic\" ]; then URL=\"moqt://$URL\"; else URL=\"https://$URL\"; fi; if [ -n \"$TOKEN\" ]; then python -m aiomoqt.examples.moq_interop_client -r \"$URL\" --draft \"$DRAFT\" --auth-token \"$TOKEN\"; else python -m aiomoqt.examples.moq_interop_client -r \"$URL\" --draft \"$DRAFT\"; fi"],
+    "network": "host"
+  },
+  "parameters": [
+    {
+      "id": "relay_url",
+      "label": "Relay URL",
+      "type": "url",
+      "required": true,
+      "default": "",
+      "placeholder": "https://relay.example.com/moq-relay",
+      "description": "MoQT relay endpoint URL"
+    },
+    {
+      "id": "draft_version",
+      "label": "Draft Version",
+      "type": "select",
+      "default": "16",
+      "options": [
+        { "value": "14", "label": "Draft 14" },
+        { "value": "16", "label": "Draft 16" },
+        { "value": "18", "label": "Draft 18" }
+      ]
+    },
+    {
+      "id": "transport",
+      "label": "Transport",
+      "type": "select",
+      "default": "quic",
+      "options": [
+        { "value": "quic", "label": "QUIC" },
+        { "value": "wt", "label": "WebTransport (H3)" }
+      ]
+    },
+    {
+      "id": "auth_token",
+      "label": "Auth Token",
+      "type": "text",
+      "required": false,
+      "default": "",
+      "placeholder": "optional-token",
+      "description": "Optional AUTH_TOKEN sent by moq_interop_client"
+    }
+  ],
+  "buildCommand": "{relay_url} {draft_version} {transport} {auth_token}",
+  "filters": [
+    { "id": "debug", "label": "Hide debug", "pattern": "^\\[DEBUG\\]|^D\\d{4}", "default": true }
+  ],
+  "renderer": "renderer.js",
+  "selfTest": [
+    {
+      "enabled": true,
+      "order": 6,
+      "label": "MOQ Interop Runner (QUIC)",
+      "selfTestTransport": "Q",
+      "defaults": {
+        "draft_version": "16",
+        "transport": "quic"
+      }
+    },
+    {
+      "enabled": true,
+      "order": 7,
+      "label": "MOQ Interop Runner (WebTransport)",
+      "selfTestTransport": "WT",
+      "defaults": {
+        "draft_version": "16",
+        "transport": "wt"
+      }
+    }
+  ]
+}

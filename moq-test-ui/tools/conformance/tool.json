@@ -1,8 +1,9 @@
 {
   "name": "conformance",
-  "displayName": "MoQ Conformance",
-  "description": "Runs the MoQTest conformance test suite against a relay, verifying protocol compliance across forwarding preferences, object handling, extensions, and complex scenarios.",
+  "displayName": "Moxygen Conformance Test",
+  "description": "Runs the MoQTest conformance test suite (https://github.com/openmoq/moxygen/blob/main/moxygen/moqtest/conformance_test.sh) against a relay, verifying protocol compliance across forwarding preferences, object handling, extensions, and complex scenarios.",
   "category": "conformance",
+  "order": 2,
   "docker": {
     "image": "ghcr.io/openmoq/moq-interop:v0.1.1",
     "entrypoint": ["/opt/moq/conformance/run_conformance.sh"],
@@ -50,8 +51,8 @@
   "selfTest": [
     {
       "enabled": true,
-      "order": 3,
-      "label": "MoQ Conformance (QUIC)",
+      "order": 4,
+      "label": "MOQ Conformance (QUIC)",
       "selfTestTransport": "Q",
       "defaults": {
         "draft": "16",
@@ -60,8 +61,8 @@
     },
     {
       "enabled": true,
-      "order": 4,
-      "label": "MoQ Conformance (WebTransport)",
+      "order": 5,
+      "label": "MOQ Conformance (WebTransport)",
       "selfTestTransport": "WT",
       "defaults": {
         "draft": "16",

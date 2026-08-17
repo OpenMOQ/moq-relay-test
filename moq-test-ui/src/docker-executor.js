@@ -69,17 +69,27 @@ export class DockerExecutor {
     const binds = [];
 
     for (const entry of tool.prepareFiles) {
-      const content = entry.generator
-        ? this.runGenerator(entry.generator, params)
-        : entry.template.replace(/\{(\w+)\}/g, (_, key) =>
-            params[key] !== undefined ? String(params[key]) : ''
-          );
+      let content;
+      if (entry.generator) {
+        content = this.runGenerator(entry.generator, params);
+      } else if (entry.file) {
+        // Read a file from the tool's own directory and mount it as-is
+        content = fs.readFileSync(path.join(tool._dir, entry.file), 'utf-8');
+      } else {
+        content = entry.template.replace(/\{(\w+)\}/g, (_, key) =>
+          params[key] !== undefined ? String(params[key]) : ''
+        );
+      }
       const filename = path.basename(entry.containerPath);
       const hostPath = path.join(tmpDir, filename);
       fs.writeFileSync(hostPath, content, 'utf-8');
       binds.push(`${hostPath}:${entry.containerPath}:ro`);
       debug(`prepareFile: ${hostPath} -> ${entry.containerPath}`);
-      onOutput(runId, `[runner] input file ${entry.containerPath}: ${content}`, Date.now());
+      if (entry.silent) {
+        onOutput(runId, `[runner] mounted ${entry.containerPath} (${content.length} bytes)`, Date.now());
+      } else {
+        onOutput(runId, `[runner] input file ${entry.containerPath}: ${content}`, Date.now());
+      }
     }
 
     const cleanup = () => {

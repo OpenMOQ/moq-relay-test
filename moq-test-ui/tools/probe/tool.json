@@ -3,6 +3,7 @@
   "displayName": "Relay Probe",
   "description": "Probes relay endpoints for liveness, supported drafts, transport types, and latency.",
   "category": "diagnostics",
+  "order": 2,
   "docker": {
     "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
     "entrypoint": ["/bin/sh", "-c"],
@@ -39,12 +40,12 @@
   ],
   "buildCommand": "",
   "filters": [
-    { "id": "debug", "label": "Hide debug output", "pattern": "^\\[DEBUG\\]|^D\\d{4}", "default": true }
+    { "id": "debug", "label": "Hide debug", "pattern": "^\\[DEBUG\\]|^D\\d{4}", "default": true }
   ],
   "renderer": "renderer.js",
   "selfTest": {
     "enabled": true,
-    "order": 1,
+    "order": 2,
     "selfTestTransport": "all",
     "defaults": {
       "transport": "both"
