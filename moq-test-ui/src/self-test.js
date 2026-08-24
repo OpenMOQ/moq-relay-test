@@ -12,28 +12,26 @@ export class SelfTestOrchestrator {
     this.activeSelfTests = new Map(); // selfTestId -> { aborted, ... }
   }
 
+  // Canonical transport codes used throughout self-test: 'quic', 'wt', or 'all'
+  // (meaning "no preference" / "runs both").
   normalizeTransport(value) {
-    const v = String(value || '').trim().toUpperCase();
-    if (!v || v === 'ALL' || v === 'BOTH') return 'all';
-    if (v === 'Q' || v === 'QUIC') return 'Q';
-    if (v === 'WT' || v === 'WEBTRANSPORT' || v === 'H3') return 'WT';
+    const v = String(value || '').trim().toLowerCase();
+    if (!v || v === 'all' || v === 'both') return 'all';
+    if (v === 'q' || v === 'quic') return 'quic';
+    if (v === 'wt' || v === 'webtransport' || v === 'h3') return 'wt';
     return 'all';
   }
 
-  entryTransport(entry) {
+  // Which transport(s) a self-test entry is able to run against, derived from
+  // its manifest declarations rather than guessing from its label.
+  entryTransport(entry, tool) {
     const explicit = this.normalizeTransport(entry?.selfTestTransport);
     if (explicit !== 'all') return explicit;
 
-    const defaultsTransport = entry?.defaults?.transport;
-    const byDefaults = this.normalizeTransport(defaultsTransport);
-    if (byDefaults !== 'all') return byDefaults;
-    if (String(defaultsTransport || '').trim().toLowerCase() === 'both') return 'all';
+    const fixed = this.normalizeTransport(tool?.fixedTransport);
+    if (fixed !== 'all') return fixed;
 
-    const label = String(entry?.label || '').toLowerCase();
-    if (label.includes('webtransport') || label.includes('(wt)') || label.includes('wt/h3')) return 'WT';
-    if (label.includes('quic')) return 'Q';
-
-    return 'all';
+    return this.normalizeTransport(entry?.defaults?.transport);
   }
 
   shouldRunEntry(selectedTransport, entryTransport) {
@@ -42,20 +40,13 @@ export class SelfTestOrchestrator {
     return selectedTransport === entryTransport;
   }
 
+  // Narrows a tool's own transport param to the user's selection, but only
+  // when the entry itself is transport-agnostic (defaults.transport === 'both').
   applySelectedTransport(params, selectedTransport) {
     if (!Object.prototype.hasOwnProperty.call(params, 'transport')) return;
-    if (selectedTransport === 'Q') {
-      if (params.transport === '' || String(params.transport).toLowerCase() === 'both') {
-        params.transport = 'Q';
-      }
-      return;
-    }
-    if (selectedTransport === 'WT') {
-      if (String(params.transport).toUpperCase() === 'Q') {
-        params.transport = '';
-      } else if (String(params.transport).toLowerCase() === 'both') {
-        params.transport = 'wt';
-      }
+    if (selectedTransport === 'all') return;
+    if (String(params.transport).toLowerCase() === 'both') {
+      params.transport = selectedTransport;
     }
   }
 
@@ -71,7 +62,7 @@ export class SelfTestOrchestrator {
     const selectedTransport = this.normalizeTransport(config.transport);
     const tools = this.registry.getSelfTestTools().filter((tool) => {
       const entry = tool._selfTestEntry || {};
-      return this.shouldRunEntry(selectedTransport, this.entryTransport(entry));
+      return this.shouldRunEntry(selectedTransport, this.entryTransport(entry, tool));
     });
     const startedAt = new Date().toISOString();
 

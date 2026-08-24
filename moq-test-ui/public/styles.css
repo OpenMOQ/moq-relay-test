@@ -251,6 +251,10 @@ main { height: calc(100vh - 52px); overflow: hidden; }
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+.param-hint-notice {
+  display: block;
+  color: var(--warning, #b8860b);
+}
 
 .form-actions {
   display: flex;

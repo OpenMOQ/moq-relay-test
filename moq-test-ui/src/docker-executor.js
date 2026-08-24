@@ -43,16 +43,55 @@ export class DockerExecutor {
   }
 
   _genRelayProbeEndpoints({ relay_url, transport = 'both' }) {
-    const toMoqt  = (u) => u.replace(/^https?:\/\//, 'moqt://');
-    const toHttps = (u) => u.replace(/^moqt:\/\//, 'https://');
     const endpoints = [];
     if (transport === 'both' || transport === 'quic') {
-      endpoints.push({ url: toMoqt(relay_url) });
+      endpoints.push({ url: this.rewriteRelayUrlScheme(relay_url, 'quic') });
     }
     if (transport === 'both' || transport === 'wt') {
-      endpoints.push({ url: toHttps(relay_url) });
+      endpoints.push({ url: this.rewriteRelayUrlScheme(relay_url, 'wt') });
     }
     return JSON.stringify([{ id: 'target', name: 'Target Relay', endpoints }], null, 2);
+  }
+
+  /**
+   * Canonical relay_url scheme rewrite shared by every tool that lets a user
+   * pick 'quic' or 'wt' as the transport. Strips any existing scheme and
+   * re-adds moqt:// (QUIC) or https:// (WebTransport/H3).
+   */
+  rewriteRelayUrlScheme(url, transport) {
+    const bare = String(url || '').replace(/^(https?|moqt):\/\//, '');
+    if (transport === 'quic') return `moqt://${bare}`;
+    if (transport === 'wt') return `https://${bare}`;
+    return url;
+  }
+
+  /**
+   * Applies any transport-parameter-driven transforms (URL scheme rewrite,
+   * flag remapping) declared on a tool's `transport` parameter, plus any
+   * fixed-scheme requirement (`forceUrlScheme`) declared on the tool itself,
+   * without mutating the caller's params.
+   */
+  _applyTransportTransforms(tool, params) {
+    let effective = params;
+
+    // Tools whose underlying binary only accepts one scheme regardless of the
+    // transport it actually uses (e.g. conformance's --url= flag always wants
+    // https://, transport is picked separately via --quic_transport).
+    if (tool.forceUrlScheme && params.relay_url) {
+      const bare = String(params.relay_url).replace(/^(https?|moqt):\/\//, '');
+      effective = { ...effective, relay_url: `${tool.forceUrlScheme}://${bare}` };
+    }
+
+    const transportParam = tool.parameters?.find(p => p.id === 'transport');
+    if (!transportParam || params.transport === undefined) return effective;
+
+    if (transportParam.rewriteUrlScheme && effective.relay_url) {
+      effective = { ...effective, relay_url: this.rewriteRelayUrlScheme(effective.relay_url, params.transport) };
+    }
+    if (transportParam.transportFlagMap && Object.prototype.hasOwnProperty.call(transportParam.transportFlagMap, params.transport)) {
+      effective = { ...effective, transport: transportParam.transportFlagMap[params.transport] };
+    }
+    return effective;
   }
 
   prepareTempFiles(tool, params, runId, onOutput) {
@@ -105,8 +144,9 @@ export class DockerExecutor {
   buildArgs(tool, params) {
     if (!tool.buildCommand) return [];
 
+    const effectiveParams = this._applyTransportTransforms(tool, params);
     const cmd = tool.buildCommand.replace(/\{(\w+)\}/g, (_, key) => {
-      return params[key] !== undefined ? String(params[key]) : '';
+      return effectiveParams[key] !== undefined ? String(effectiveParams[key]) : '';
     });
     // Split on whitespace; drop empty tokens AND --flag= tokens where the
     // value was empty after substitution (e.g. "--tests=" when tests is blank).

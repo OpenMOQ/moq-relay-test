@@ -4,6 +4,7 @@
   "description": "Runs the MoQTest conformance test suite (https://github.com/openmoq/moxygen/blob/main/moxygen/moqtest/conformance_test.sh) against a relay, verifying protocol compliance across forwarding preferences, object handling, extensions, and complex scenarios.",
   "category": "conformance",
   "order": 2,
+  "forceUrlScheme": "https",
   "docker": {
     "image": "ghcr.io/openmoq/moq-interop:v0.1.1",
     "entrypoint": ["/opt/moq/conformance/run_conformance.sh"],
@@ -36,10 +37,11 @@
       "label": "Transport",
       "type": "select",
       "options": [
-        { "value": "Q", "label": "QUIC" },
-        { "value": "", "label": "WebTransport (H3)" }
+        { "value": "quic", "label": "QUIC" },
+        { "value": "wt", "label": "WebTransport (H3)" }
       ],
-      "default": "Q"
+      "default": "quic",
+      "transportFlagMap": { "quic": "Q", "wt": "" }
     }
   ],
   "buildCommand": "{relay_url} {draft} {transport}",
@@ -56,7 +58,7 @@
       "selfTestTransport": "Q",
       "defaults": {
         "draft": "16",
-        "transport": "Q"
+        "transport": "quic"
       }
     },
     {
@@ -66,7 +68,7 @@
       "selfTestTransport": "WT",
       "defaults": {
         "draft": "16",
-        "transport": ""
+        "transport": "wt"
       }
     }
   ]

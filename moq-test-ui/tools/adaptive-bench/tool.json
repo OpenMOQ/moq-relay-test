@@ -31,6 +31,17 @@
       "default": "16"
     },
     {
+      "id": "transport",
+      "label": "Transport",
+      "type": "select",
+      "default": "quic",
+      "options": [
+        { "value": "quic", "label": "QUIC" },
+        { "value": "wt", "label": "WebTransport (H3)" }
+      ],
+      "rewriteUrlScheme": true
+    },
+    {
       "id": "duration",
       "label": "Duration (seconds)",
       "type": "number",

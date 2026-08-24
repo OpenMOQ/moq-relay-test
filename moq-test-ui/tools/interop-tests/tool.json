@@ -4,6 +4,8 @@
   "description": "Runs the MoQ interoperability test (https://github.com/openmoq/moq-relay-test/blob/main/moq-interop/moq-interop_tests/README.MD) against a relay, testing protocol-level operations like goaway, subscribe, publish, fetch, and error handling.",
   "category": "conformance",
   "order": 1,
+  "fixedTransport": "wt",
+  "forceUrlScheme": "https",
   "docker": {
     "image": "ghcr.io/openmoq/moq-interop:v0.1.1",
     "command": [],

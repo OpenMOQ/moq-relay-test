@@ -75,6 +75,7 @@ export class ToolRegistry {
       renderer: t._hasRenderer ? t.renderer || 'renderer.js' : null,
       persistResults: t.persistResults,
       selfTest: t.selfTest || null,
+      forceUrlScheme: t.forceUrlScheme || null,
     }));
   }
 
