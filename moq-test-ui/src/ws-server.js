@@ -80,15 +80,17 @@ export function createWSServer(server, toolRegistry, dockerExecutor, resultsStor
             send(ws, 'output', { runId, line, ts });
           },
           (runId, exitCode) => {
-            // Save results
-            resultsStore.save({
-              tool: tool.name,
-              params: msg.params,
-              startedAt: session.runs.get(runId)?.startedAt || new Date().toISOString(),
-              exitCode,
-              sessionId,
-              output: outputBuffer,
-            });
+            // Save results unless tool explicitly opts out of history persistence.
+            if (tool.persistResults !== false) {
+              resultsStore.save({
+                tool: tool.name,
+                params: msg.params,
+                startedAt: session.runs.get(runId)?.startedAt || new Date().toISOString(),
+                exitCode,
+                sessionId,
+                output: outputBuffer,
+              });
+            }
             session.runs.delete(runId);
             send(ws, 'run-complete', { runId, exitCode });
           },
@@ -136,7 +138,15 @@ export function createWSServer(server, toolRegistry, dockerExecutor, resultsStor
       }
 
       case 'list-results': {
-        const results = resultsStore.list(msg.tool || null);
+        const hiddenTools = new Set(
+          toolRegistry
+            .list()
+            .filter(t => t.persistResults === false)
+            .map(t => t.name),
+        );
+        const results = resultsStore
+          .list(msg.tool || null)
+          .filter(r => !hiddenTools.has(r.tool));
         send(ws, 'results-list', { results });
         break;
       }

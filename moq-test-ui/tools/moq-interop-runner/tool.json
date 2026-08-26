@@ -7,7 +7,7 @@
   "docker": {
     "image": "ghcr.io/gmarzot/aiomoqt:0.10.6",
     "entrypoint": ["/bin/sh", "-c"],
-    "command": ["URL=\"$0\"; DRAFT=\"$1\"; TRANSPORT=\"$2\"; TOKEN=\"${3:-}\"; URL=\"${URL#moqt://}\"; URL=\"${URL#https://}\"; URL=\"${URL#http://}\"; if [ \"$TRANSPORT\" = \"quic\" ]; then URL=\"moqt://$URL\"; else URL=\"https://$URL\"; fi; if [ -n \"$TOKEN\" ]; then python -m aiomoqt.examples.moq_interop_client -r \"$URL\" --draft \"$DRAFT\" --auth-token \"$TOKEN\"; else python -m aiomoqt.examples.moq_interop_client -r \"$URL\" --draft \"$DRAFT\"; fi"],
+    "command": ["URL=\"$0\"; DRAFT=\"$1\"; TOKEN=\"${2:-}\"; if [ -n \"$TOKEN\" ]; then python -m aiomoqt.examples.moq_interop_client -r \"$URL\" --draft \"$DRAFT\" --auth-token \"$TOKEN\"; else python -m aiomoqt.examples.moq_interop_client -r \"$URL\" --draft \"$DRAFT\"; fi"],
     "network": "host"
   },
   "parameters": [
@@ -39,7 +39,8 @@
       "options": [
         { "value": "quic", "label": "QUIC" },
         { "value": "wt", "label": "WebTransport (H3)" }
-      ]
+      ],
+      "rewriteUrlScheme": true
     },
     {
       "id": "auth_token",
@@ -51,7 +52,7 @@
       "description": "Optional AUTH_TOKEN sent by moq_interop_client"
     }
   ],
-  "buildCommand": "{relay_url} {draft_version} {transport} {auth_token}",
+  "buildCommand": "{relay_url} {draft_version} {auth_token}",
   "filters": [
     { "id": "debug", "label": "Hide debug", "pattern": "^\\[DEBUG\\]|^D\\d{4}", "default": true }
   ],

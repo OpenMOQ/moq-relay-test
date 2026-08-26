@@ -25,7 +25,7 @@ export class ParamForm {
     }
   }
 
-  render(params, formEl) {
+  render(params, formEl, tool) {
     this.params = params;
     this.formEl = formEl;
     formEl.innerHTML = '';
@@ -99,6 +99,13 @@ export class ParamForm {
         hint.className = 'param-hint';
         hint.textContent = param.description;
         group.appendChild(hint);
+      }
+
+      if (param.id === 'relay_url' && tool?.forceUrlScheme) {
+        const notice = document.createElement('small');
+        notice.className = 'param-hint param-hint-notice';
+        notice.textContent = `This tool only supports ${tool.forceUrlScheme}:// — the URL will be normalized automatically.`;
+        group.appendChild(notice);
       }
 
       formEl.appendChild(group);

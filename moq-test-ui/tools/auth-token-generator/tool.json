@@ -1,0 +1,77 @@
+{
+  "name": "auth-token-generator",
+  "displayName": "Auth Token Generator",
+  "description": "Generates MoQT authentication tokens for specific actions, namespaces, and tracks using a key ID, secret, and service name.",
+  "category": "authentication",
+  "order": 4,
+  "docker": {
+    "image": "ghcr.io/openmoq/moqx:5611457",
+    "command": ["issue-cat-token"],
+    "network": "host"
+  },
+  "parameters": [
+    {
+      "id": "auth_service",
+      "label": "Auth Service",
+      "type": "text",
+      "required": true,
+      "default": "live",
+      "placeholder": "e.g., live",
+      "description": "Service name used when issuing the token."
+    },
+    {
+      "id": "auth_key_id",
+      "label": "Auth Key ID",
+      "type": "text",
+      "required": true,
+      "default": "cat-dev",
+      "placeholder": "e.g., cat-dev",
+      "description": "Key ID used for issuing the token."
+    },
+    {
+      "id": "auth_secret",
+      "label": "Auth Secret",
+      "type": "text",
+      "required": true,
+      "default": "",
+      "placeholder": "replace-with-long-random-secret",
+      "description": "The secret key associated with the Key ID."
+    },
+    {
+      "id": "auth_actions",
+      "label": "Auth Actions",
+      "type": "text",
+      "required": true,
+      "default": "client_setup,publish_namespace,publish",
+      "placeholder": "client_setup,publish_namespace,publish",
+      "description": "Comma-separated list of permitted actions. Supported: client_setup, server_setup, publish_namespace, subscribe_namespace, subscribe, request_update, publish, fetch, track_status."
+    },
+    {
+      "id": "auth_namespace",
+      "label": "Auth Namespace",
+      "type": "text",
+      "required": true,
+      "default": "live/event/main",
+      "placeholder": "live/event/main",
+      "description": "The namespace to authorize the actions against."
+    },
+    {
+      "id": "auth_track",
+      "label": "Auth Track",
+      "type": "text",
+      "required": true,
+      "default": "video",
+      "placeholder": "video",
+      "description": "The track to authorize the actions against."
+    }
+  ],
+  "buildCommand": "--auth-service {auth_service} --auth-key-id {auth_key_id} --auth-secret {auth_secret} --auth-actions {auth_actions} --auth-namespace {auth_namespace} --auth-track {auth_track}",
+  "filters": [
+    { "id": "debug", "label": "Hide debug", "pattern": "^\\[DEBUG\\]", "default": true }
+  ],
+  "renderer": "renderer.js",
+  "persistResults": false,
+  "selfTest": {
+    "enabled": false
+  }
+}

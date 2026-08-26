@@ -293,7 +293,7 @@ class App {
     document.getElementById('tool-title').textContent = this.selectedTool.displayName;
     document.getElementById('tool-description').textContent = this.selectedTool.description || '';
 
-    this.paramForm.render(this.selectedTool.parameters, document.getElementById('param-form'));
+    this.paramForm.render(this.selectedTool.parameters, document.getElementById('param-form'), this.selectedTool);
     this.applyEndpointToRelayInputs(this.defaultEndpointUrl);
     this.bindRelayInputSync();
     this.outputPanel.setFilters(this.selectedTool.filters);
